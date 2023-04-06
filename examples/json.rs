@@ -6,7 +6,7 @@ use fermi::{use_init_atom_root, use_read, use_set, Atom};
 use serde::{Deserialize, Serialize};
 
 fn main() {
-    dioxus::web::launch(app);
+    dioxus_web::launch(app);
 }
 
 // Response and request are identical since we're connecting to an echo server.
@@ -65,19 +65,19 @@ fn ResponseDisplay(cx: Scope) -> Element {
 fn SendA(cx: Scope) -> Element {
     let ws = use_ws_context(&cx);
     let onclick = move |_| ws.send_json(&WsRequest::A);
-    cx.render(rsx!(button { onclick: onclick, "A" }))
+    cx.render(rsx!( button { onclick: onclick, "A" } ))
 }
 
 #[allow(non_snake_case)]
 fn SendB(cx: Scope) -> Element {
     let ws = use_ws_context(&cx);
     let onclick = move |_| ws.send_json(&WsRequest::B);
-    cx.render(rsx!(button { onclick: onclick, "B" }))
+    cx.render(rsx!( button { onclick: onclick, "B" } ))
 }
 
 #[allow(non_snake_case)]
 fn SendC(cx: Scope) -> Element {
     let ws = use_ws_context(&cx);
     let onclick = move |_| ws.send_json(&WsRequest::C);
-    cx.render(rsx!(button { onclick: onclick, "C" }))
+    cx.render(rsx!( button { onclick: onclick, "C" } ))
 }

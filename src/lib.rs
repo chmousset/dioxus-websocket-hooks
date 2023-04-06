@@ -6,7 +6,8 @@ use futures::{
     stream::{SplitSink, SplitStream},
     SinkExt, StreamExt,
 };
-use reqwasm::websocket::{futures::WebSocket, Message};
+use reqwasm::websocket::futures::WebSocket;
+pub use reqwasm::websocket::Message;
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::JsValue;
 use wasm_bindgen_futures::spawn_local;
@@ -101,7 +102,7 @@ fn log_err(s: &str) {
 pub fn use_ws_context_provider(cx: &ScopeState, url: &str, handler: impl Fn(Message) + 'static) {
     let handler = Rc::new(handler);
 
-    cx.use_hook(|_| {
+    cx.use_hook(|| {
         let ws = cx.provide_context(DioxusWs::new(url));
         let receiver = ws.receiver.clone();
 
