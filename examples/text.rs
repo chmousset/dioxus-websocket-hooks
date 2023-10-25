@@ -1,21 +1,18 @@
-use std::rc::Rc;
-
 use dioxus::prelude::*;
 use dioxus_websocket_hooks::{use_ws_context, use_ws_context_provider_text};
-use fermi::{use_init_atom_root, use_read, use_set, Atom};
 
 fn main() {
     dioxus_web::launch(app);
 }
 
-pub static WS_RESPONSE_ATOM: Atom<String> = |_| Default::default();
-
 fn app(cx: Scope) -> Element {
-    use_init_atom_root(&cx);
-    let set_response = Rc::clone(use_set(&cx, WS_RESPONSE_ATOM));
+    // let response = use_ref(cx, || Vec::new());
+    use_shared_state_provider(&cx, || Vec::<String>::new());
+    let set_response = use_shared_state::<Vec<String>>(&cx).unwrap();
 
+    let set_response = set_response.clone();
     use_ws_context_provider_text(&cx, "wss://echo.websocket.events", move |msg| {
-        set_response(msg)
+        set_response.write().push(msg);
     });
 
     cx.render(rsx!(ResponseDisplay {}))
@@ -23,7 +20,7 @@ fn app(cx: Scope) -> Element {
 
 #[allow(non_snake_case)]
 fn ResponseDisplay(cx: Scope) -> Element {
-    let response = use_read(&cx, WS_RESPONSE_ATOM);
+    let response = use_shared_state::<Vec<String>>(&cx).unwrap();
     let ws = use_ws_context(&cx);
 
     let input = use_state(&cx, String::default);
@@ -32,8 +29,13 @@ fn ResponseDisplay(cx: Scope) -> Element {
         input.modify(|_| String::default());
     };
 
+    let response = response.read();
+    let response_rendered = response
+        .iter()
+        .map(|comment: &String| rsx!(p { "{comment}" }));
+
     cx.render(rsx! (
-        div { "Server sent: {response}" }
+        div { "Server sent:" response_rendered }
         input { oninput: move |event| input.modify(|_| event.value.clone())  }
         button { onclick: submit, "Submit" }
     ))

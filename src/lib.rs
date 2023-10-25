@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 use wasm_bindgen::JsValue;
 use wasm_bindgen_futures::spawn_local;
 
+
 #[derive(Clone)]
 pub struct DioxusWs {
     url: String,
@@ -99,7 +100,7 @@ fn log_err(s: &str) {
 }
 
 /// Provide websocket context with a handler for incoming reqwasm Messages
-pub fn use_ws_context_provider(cx: &ScopeState, url: &str, handler: impl Fn(Message) + 'static) {
+pub fn use_ws_context_provider(cx: &Scope, url: &str, handler: impl Fn(Message) + 'static) {
     let handler = Rc::new(handler);
 
     cx.use_hook(|| {
@@ -107,6 +108,7 @@ pub fn use_ws_context_provider(cx: &ScopeState, url: &str, handler: impl Fn(Mess
         let receiver = ws.receiver.clone();
 
         cx.push_future(async move {
+            ws.set_open(true);
             loop {
                 let mut err = None;
 
@@ -115,7 +117,6 @@ pub fn use_ws_context_provider(cx: &ScopeState, url: &str, handler: impl Fn(Mess
                     while let Some(msg) = receiver.next().await {
                         match msg {
                             Ok(msg) => {
-                                ws.set_open(true);
                                 handler(msg)
                             },
                             Err(e) => {
@@ -135,6 +136,7 @@ pub fn use_ws_context_provider(cx: &ScopeState, url: &str, handler: impl Fn(Mess
                     async_std::task::sleep(Duration::from_millis(1000)).await;
 
                     ws.reconnect().await;
+                    ws.set_open(true);
                 }
             }
         })
@@ -143,7 +145,7 @@ pub fn use_ws_context_provider(cx: &ScopeState, url: &str, handler: impl Fn(Mess
 
 /// Provide websocket context with a handler for incoming plaintext messages
 pub fn use_ws_context_provider_text(
-    cx: &ScopeState,
+    cx: &Scope,
     url: &str,
     handler: impl Fn(String) + 'static,
 ) {
@@ -158,7 +160,7 @@ pub fn use_ws_context_provider_text(
 
 /// Provide websocket context with a handler for incoming JSON messages.
 /// Note that the message type T must implement Deserialize.
-pub fn use_ws_context_provider_json<T>(cx: &ScopeState, url: &str, handler: impl Fn(T) + 'static)
+pub fn use_ws_context_provider_json<T>(cx: &Scope, url: &str, handler: impl Fn(T) + 'static)
 where
     T: for<'de> Deserialize<'de>,
 {
@@ -187,6 +189,6 @@ where
 /// opens. You will not be able to send websocket messages from the client
 /// before a message has been received from the server. This is a limitation
 /// in the current reconnection logic.
-pub fn use_ws_context(cx: &ScopeState) -> DioxusWs {
+pub fn use_ws_context(cx: &Scope) -> DioxusWs {
     cx.consume_context::<DioxusWs>().unwrap()
 }
